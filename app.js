@@ -5,6 +5,14 @@
     let todayQueue = [];
     let currentIndex = 0;
     let todayStr = '';
+    let viewerScale = 1;
+    let viewerTranslateX = 0;
+    let viewerTranslateY = 0;
+    let isDragging = false;
+    let dragStartX = 0;
+    let dragStartY = 0;
+    let dragLastX = 0;
+    let dragLastY = 0;
 
     const $ = (sel) => document.querySelector(sel);
     const $$ = (sel) => document.querySelectorAll(sel);
@@ -121,8 +129,7 @@
         if (poemCount === 0) {
             POEMS_DATA.forEach(p => {
                 db.run(
-                    "INSERT OR IGNORE INTO poems VALUES (?, ?, ?, ?, ?, ?, ?)",
-                    [p.id, p.title, p.author, JSON.stringify(p.content), JSON.stringify(p.pinyin), JSON.stringify(p.keywords), p.analysis]
+                    "INSERT OR IGNORE INTO poems VALUES (?, ?, ?, ?, ?, ?, ?)", [p.id, p.title, p.author, JSON.stringify(p.content), JSON.stringify(p.pinyin), JSON.stringify(p.keywords), p.analysis]
                 );
             });
         }
@@ -157,61 +164,40 @@
             `INSERT INTO learning (poem_id, memory_level, next_review, today_remaining, status, mastered, last_action, last_review_date)
              VALUES (?, ?, ?, 0, 'reviewing', 0, 'know', ?)
              ON CONFLICT(poem_id) DO UPDATE SET
-             memory_level = ?, next_review = ?, today_remaining = 0, status = 'reviewing', last_action = 'know', last_review_date = ?`,
-            [poemId, level, nextReview, todayStr, level, nextReview, todayStr]
+             memory_level = ?, next_review = ?, today_remaining = 0, status = 'reviewing', last_action = 'know', last_review_date = ?`, [poemId, level, nextReview, todayStr, level, nextReview, todayStr]
         );
         saveDB();
     }
 
     function handleFuzzy(poemId) {
-        const rows = db.exec("SELECT memory_level, today_remaining, next_review FROM learning WHERE poem_id = ?", [poemId]);
-        let level = 1, remaining = 0;
-        let currentInterval = 2;
+        const rows = db.exec("SELECT memory_level FROM learning WHERE poem_id = ?", [poemId]);
+        let level = 1;
 
         if (rows.length > 0 && rows[0].values.length > 0) {
             level = rows[0].values[0][0];
-            remaining = rows[0].values[0][1];
         }
 
         level = Math.max(1, level - 1);
         const newInterval = Math.max(1, Math.floor(getIntervalDays(level) / 2));
         const nextReview = addDays(todayStr, newInterval);
 
-        let todayRemaining = remaining;
-        if (todayRemaining <= 0) {
-            todayRemaining = 1 + Math.floor(Math.random() * 2);
-        }
-
         db.run(
             `INSERT INTO learning (poem_id, memory_level, next_review, today_remaining, status, mastered, last_action, last_review_date)
-             VALUES (?, ?, ?, ?, 'reviewing', 0, 'fuzzy', ?)
+             VALUES (?, ?, ?, 0, 'reviewing', 0, 'fuzzy', ?)
              ON CONFLICT(poem_id) DO UPDATE SET
-             memory_level = ?, next_review = ?, today_remaining = ?, status = 'reviewing', last_action = 'fuzzy', last_review_date = ?`,
-            [poemId, level, nextReview, todayRemaining, todayStr, level, nextReview, todayRemaining, todayStr]
+             memory_level = ?, next_review = ?, today_remaining = 0, status = 'reviewing', last_action = 'fuzzy', last_review_date = ?`, [poemId, level, nextReview, todayStr, level, nextReview, todayStr]
         );
         saveDB();
     }
 
     function handleForget(poemId) {
-        const rows = db.exec("SELECT today_remaining FROM learning WHERE poem_id = ?", [poemId]);
-        let remaining = 0;
-        if (rows.length > 0 && rows[0].values.length > 0) {
-            remaining = rows[0].values[0][0];
-        }
-
-        let todayRemaining = remaining;
-        if (todayRemaining <= 0) {
-            todayRemaining = 2 + Math.floor(Math.random() * 2);
-        }
-
         const nextReview = addDays(todayStr, 1);
 
         db.run(
             `INSERT INTO learning (poem_id, memory_level, next_review, today_remaining, status, mastered, last_action, last_review_date)
-             VALUES (?, 0, ?, ?, 'reviewing', 0, 'forget', ?)
+             VALUES (?, 0, ?, 0, 'reviewing', 0, 'forget', ?)
              ON CONFLICT(poem_id) DO UPDATE SET
-             memory_level = 0, next_review = ?, today_remaining = ?, status = 'reviewing', last_action = 'forget', last_review_date = ?`,
-            [poemId, nextReview, todayRemaining, todayStr, nextReview, todayRemaining, todayStr]
+             memory_level = 0, next_review = ?, today_remaining = 0, status = 'reviewing', last_action = 'forget', last_review_date = ?`, [poemId, nextReview, todayStr, nextReview, todayStr]
         );
         saveDB();
     }
@@ -221,8 +207,7 @@
             `INSERT INTO learning (poem_id, memory_level, next_review, today_remaining, status, mastered, last_action, last_review_date)
              VALUES (?, 99, '', 0, 'mastered', 1, 'mastered', ?)
              ON CONFLICT(poem_id) DO UPDATE SET
-             mastered = 1, status = 'mastered', today_remaining = 0, last_action = 'mastered', last_review_date = ?`,
-            [poemId, todayStr, todayStr]
+             mastered = 1, status = 'mastered', today_remaining = 0, last_action = 'mastered', last_review_date = ?`, [poemId, todayStr, todayStr]
         );
         saveDB();
     }
@@ -249,8 +234,7 @@
 
                 db.run(
                     `INSERT OR IGNORE INTO learning (poem_id, memory_level, next_review, today_remaining, status, mastered, last_action, last_review_date)
-                     VALUES (?, 0, ?, 0, 'new', 0, '', ?)`,
-                    [todayNewPoemId, todayStr, todayStr]
+                     VALUES (?, 0, ?, 0, 'new', 0, '', ?)`, [todayNewPoemId, todayStr, todayStr]
                 );
                 saveDB();
             }
@@ -262,44 +246,20 @@
             if (newStatus.length > 0 && newStatus[0].values.length > 0) {
                 lastAction = newStatus[0].values[0][0] || '';
             }
-            if (lastAction === '' || lastAction === 'fuzzy' || lastAction === 'forget') {
-                const remaining = db.exec("SELECT today_remaining FROM learning WHERE poem_id = ?", [todayNewPoemId]);
-                let rem = 0;
-                if (remaining.length > 0 && remaining[0].values.length > 0) {
-                    rem = remaining[0].values[0][0];
-                }
-                if (lastAction === '' || rem > 0) {
-                    todayQueue.push({ poemId: todayNewPoemId, type: 'new' });
-                }
+            if (lastAction === '') {
+                todayQueue.push({ poemId: todayNewPoemId, type: 'new' });
             }
         }
 
         const reviewRows = db.exec(
-            `SELECT poem_id, today_remaining, last_action FROM learning
-             WHERE mastered = 0 AND next_review <= ? AND poem_id != ?
-             ORDER BY next_review ASC`,
-            [todayStr, todayNewPoemId]
+            `SELECT poem_id FROM learning
+             WHERE mastered = 0 AND next_review <= ? AND last_review_date != ? AND poem_id != ?
+             ORDER BY next_review ASC`, [todayStr, todayStr, todayNewPoemId]
         );
 
         if (reviewRows.length > 0) {
             reviewRows[0].values.forEach(row => {
                 todayQueue.push({ poemId: row[0], type: 'review' });
-            });
-        }
-
-        const fuzzyForgetRows = db.exec(
-            `SELECT poem_id, today_remaining, last_action FROM learning
-             WHERE mastered = 0 AND today_remaining > 0 AND last_review_date = ? AND poem_id != ?`,
-            [todayStr, todayNewPoemId]
-        );
-
-        if (fuzzyForgetRows.length > 0) {
-            fuzzyForgetRows[0].values.forEach(row => {
-                const pid = row[0];
-                const exists = todayQueue.some(q => q.poemId === pid);
-                if (!exists) {
-                    todayQueue.push({ poemId: pid, type: 'review' });
-                }
             });
         }
 
@@ -390,7 +350,34 @@
 
         $('#poem-analysis').innerHTML = `<p>${poem.analysis}</p>`;
 
-        const card = $('#poem-card');
+        var imgWrap = $('#poem-image-wrap');
+        var poemImg = $('#poem-image');
+        var poemDetail = $('#poem-detail');
+        var btnShowPoem = $('#btn-show-poem');
+
+        imgWrap.classList.add('no-image');
+        poemImg.removeAttribute('src');
+
+        poemDetail.classList.remove('collapsed', 'expanding');
+        btnShowPoem.classList.add('hidden');
+
+        var imgSrc = 'img/' + poem.id + '.png';
+        var testImg = new Image();
+        testImg.onload = function () {
+            poemImg.src = imgSrc;
+            imgWrap.classList.remove('no-image');
+        };
+        testImg.onerror = function () {
+            imgWrap.classList.add('no-image');
+        };
+        testImg.src = imgSrc;
+
+        if (queueItem.type === 'review') {
+            poemDetail.classList.add('collapsed');
+            btnShowPoem.classList.remove('hidden');
+        }
+
+        var card = $('#poem-card');
         card.style.animation = 'none';
         card.offsetHeight;
         card.style.animation = 'cardSlideIn 0.5s ease-out';
@@ -421,21 +408,6 @@
                 handleMastered(poemId);
                 showToast('🏆 已标记为熟知');
                 break;
-        }
-
-        if (action === 'fuzzy' || action === 'forget') {
-            const remaining = db.exec("SELECT today_remaining FROM learning WHERE poem_id = ?", [poemId]);
-            let rem = 0;
-            if (remaining.length > 0 && remaining[0].values.length > 0) {
-                rem = remaining[0].values[0][0];
-            }
-            if (rem > 0) {
-                db.run("UPDATE learning SET today_remaining = ? WHERE poem_id = ?", [rem - 1, poemId]);
-                saveDB();
-                if (rem - 1 > 0) {
-                    todayQueue.push({ poemId: poemId, type: 'review' });
-                }
-            }
         }
 
         currentIndex++;
@@ -481,21 +453,37 @@
 
         const btnStart = $('#btn-start-learn');
         const homeDone = $('#home-done');
+        const btnContinue = $('#btn-continue-learn');
 
         if (todayQueue.length === 0 || currentIndex >= todayQueue.length) {
             btnStart.classList.add('hidden');
             homeDone.classList.remove('hidden');
+
+            const unlearnedRows = db.exec(
+                `SELECT p.id FROM poems p
+                 LEFT JOIN learning l ON p.id = l.poem_id
+                 WHERE l.poem_id IS NULL`
+            );
+            if (unlearnedRows.length > 0 && unlearnedRows[0].values.length > 0) {
+                btnContinue.classList.remove('hidden');
+            } else {
+                btnContinue.classList.add('hidden');
+            }
         } else {
             btnStart.classList.remove('hidden');
             homeDone.classList.add('hidden');
+            btnContinue.classList.add('hidden');
         }
     }
 
     function updateStatsPage() {
         const totalPoems = db.exec("SELECT COUNT(*) FROM poems")[0].values[0][0];
-        const learnedCount = db.exec("SELECT COUNT(*) FROM learning WHERE status != 'new' OR last_action != ''")[0]?.values[0][0] || 0;
-        const masteredCount = db.exec("SELECT COUNT(*) FROM learning WHERE mastered = 1")[0]?.values[0][0] || 0;
-        const reviewingCount = db.exec("SELECT COUNT(*) FROM learning WHERE mastered = 0 AND status = 'reviewing'")[0]?.values[0][0] || 0;
+        const learnedResult = db.exec("SELECT COUNT(*) FROM learning WHERE status != 'new' OR last_action != ''");
+        const learnedCount = (learnedResult[0] && learnedResult[0].values && learnedResult[0].values[0]) ? learnedResult[0].values[0][0] : 0;
+        const masteredResult = db.exec("SELECT COUNT(*) FROM learning WHERE mastered = 1");
+        const masteredCount = (masteredResult[0] && masteredResult[0].values && masteredResult[0].values[0]) ? masteredResult[0].values[0][0] : 0;
+        const reviewingResult = db.exec("SELECT COUNT(*) FROM learning WHERE mastered = 0 AND status = 'reviewing'");
+        const reviewingCount = (reviewingResult[0] && reviewingResult[0].values && reviewingResult[0].values[0]) ? reviewingResult[0].values[0][0] : 0;
         const remaining = totalPoems - learnedCount;
 
         $('#stats-learned').textContent = learnedCount;
@@ -636,17 +624,136 @@
     }
 
     async function resetData() {
-        const confirmed = await showModal('重置数据', '将清除所有学习记录，诗词库保留。确定继续吗？');
+        const confirmed = await showModal('重置数据', '将彻底清空所有数据（包括缓存），并从诗词库重新初始化。确定继续吗？');
         if (!confirmed) return;
 
-        db.run("DELETE FROM learning");
-        db.run("DELETE FROM daily_log");
+        localStorage.removeItem('poetry_db');
+
+        db.run("DROP TABLE IF EXISTS poems");
+        db.run("DROP TABLE IF EXISTS learning");
+        db.run("DROP TABLE IF EXISTS daily_log");
+
+        db.run(`CREATE TABLE poems (
+            id INTEGER PRIMARY KEY,
+            title TEXT NOT NULL,
+            author TEXT NOT NULL,
+            content TEXT NOT NULL,
+            pinyin TEXT NOT NULL,
+            keywords TEXT NOT NULL,
+            analysis TEXT NOT NULL
+        )`);
+
+        db.run(`CREATE TABLE learning (
+            poem_id INTEGER PRIMARY KEY,
+            memory_level INTEGER DEFAULT 0,
+            next_review TEXT DEFAULT '',
+            today_remaining INTEGER DEFAULT 0,
+            status TEXT DEFAULT 'new',
+            mastered INTEGER DEFAULT 0,
+            last_action TEXT DEFAULT '',
+            last_review_date TEXT DEFAULT ''
+        )`);
+
+        db.run(`CREATE TABLE daily_log (
+            date TEXT PRIMARY KEY,
+            new_poem_id INTEGER DEFAULT 0
+        )`);
+
+        POEMS_DATA.forEach(p => {
+            db.run(
+                "INSERT INTO poems VALUES (?, ?, ?, ?, ?, ?, ?)", [p.id, p.title, p.author, JSON.stringify(p.content), JSON.stringify(p.pinyin), JSON.stringify(p.keywords), p.analysis]
+            );
+        });
+
         saveDB();
-        showToast('🗑️ 学习记录已重置');
+        showToast('🗑️ 数据已彻底重置');
         updateHomePage();
     }
 
+    function continueLearn() {
+        const unlearnedRows = db.exec(
+            `SELECT p.id FROM poems p
+             LEFT JOIN learning l ON p.id = l.poem_id
+             WHERE l.poem_id IS NULL
+             ORDER BY p.id ASC LIMIT 1`
+        );
+
+        if (unlearnedRows.length === 0 || unlearnedRows[0].values.length === 0) {
+            showToast('所有诗词已学习完毕！');
+            return;
+        }
+
+        const newPoemId = unlearnedRows[0].values[0][0];
+
+        db.run(
+            `INSERT OR IGNORE INTO learning (poem_id, memory_level, next_review, today_remaining, status, mastered, last_action, last_review_date)
+             VALUES (?, 0, ?, 0, 'new', 0, '', ?)`, [newPoemId, todayStr, todayStr]
+        );
+
+        db.run("INSERT OR REPLACE INTO daily_log (date, new_poem_id) VALUES (?, ?)", [todayStr, newPoemId]);
+
+        saveDB();
+        updateHomePage();
+
+        todayQueue = [{ poemId: newPoemId, type: 'new' }];
+        currentIndex = 0;
+        navigateTo('page-learn');
+        renderPoem(todayQueue[0]);
+        showToast('📖 开始学习新诗词');
+    }
+
+    function openImageViewer(src) {
+        var viewer = $('#image-viewer');
+        var viewerImg = $('#viewer-image');
+        viewerScale = 1;
+        viewerTranslateX = 0;
+        viewerTranslateY = 0;
+        viewerImg.src = src;
+        updateViewerTransform();
+        viewer.classList.remove('hidden');
+        document.body.style.overflow = 'hidden';
+    }
+
+    function closeImageViewer() {
+        var viewer = $('#image-viewer');
+        viewer.classList.add('hidden');
+        document.body.style.overflow = '';
+        isDragging = false;
+    }
+
+    function updateViewerTransform() {
+        var viewerImg = $('#viewer-image');
+        viewerImg.style.transform = 'scale(' + viewerScale + ') translate(' + viewerTranslateX + 'px, ' + viewerTranslateY + 'px)';
+    }
+
+    function zoomIn() {
+        viewerScale = Math.min(viewerScale + 0.3, 5);
+        updateViewerTransform();
+    }
+
+    function zoomOut() {
+        viewerScale = Math.max(viewerScale - 0.3, 0.5);
+        if (viewerScale <= 1) {
+            viewerTranslateX = 0;
+            viewerTranslateY = 0;
+        }
+        updateViewerTransform();
+    }
+
+    function showPoemDetail() {
+        var poemDetail = $('#poem-detail');
+        var btnShowPoem = $('#btn-show-poem');
+        poemDetail.classList.remove('collapsed');
+        poemDetail.classList.add('expanding');
+        btnShowPoem.classList.add('hidden');
+    }
+
     function bindEvents() {
+        $('#btn-home').addEventListener('click', () => {
+            navigateTo('page-home');
+            updateHomePage();
+        });
+
         $('#btn-start-learn').addEventListener('click', () => {
             if (todayQueue.length === 0) {
                 showToast('今日没有需要学习的诗词');
@@ -698,12 +805,98 @@
 
         $('#btn-reset').addEventListener('click', resetData);
 
+        $('#btn-continue-learn').addEventListener('click', continueLearn);
+
         $$('.filter-btn').forEach(btn => {
             btn.addEventListener('click', () => {
                 $$('.filter-btn').forEach(b => b.classList.remove('active'));
                 btn.classList.add('active');
                 updatePoemList(btn.dataset.filter);
             });
+        });
+
+        $('#poem-image-wrap').addEventListener('click', function () {
+            var src = $('#poem-image').getAttribute('src');
+            if (src) {
+                openImageViewer(src);
+            }
+        });
+
+        $('#btn-show-poem').addEventListener('click', showPoemDetail);
+
+        $('#viewer-zoom-in').addEventListener('click', zoomIn);
+        $('#viewer-zoom-out').addEventListener('click', zoomOut);
+        $('#viewer-close').addEventListener('click', closeImageViewer);
+        $('#viewer-backdrop').addEventListener('click', closeImageViewer);
+
+        var viewerImg = $('#viewer-image');
+        viewerImg.addEventListener('mousedown', function (e) {
+            if (viewerScale > 1) {
+                isDragging = true;
+                dragStartX = e.clientX;
+                dragStartY = e.clientY;
+                dragLastX = viewerTranslateX;
+                dragLastY = viewerTranslateY;
+                e.preventDefault();
+            }
+        });
+
+        document.addEventListener('mousemove', function (e) {
+            if (!isDragging) return;
+            var dx = (e.clientX - dragStartX) / viewerScale;
+            var dy = (e.clientY - dragStartY) / viewerScale;
+            viewerTranslateX = dragLastX + dx;
+            viewerTranslateY = dragLastY + dy;
+            updateViewerTransform();
+        });
+
+        document.addEventListener('mouseup', function () {
+            isDragging = false;
+        });
+
+        viewerImg.addEventListener('touchstart', function (e) {
+            if (viewerScale > 1 && e.touches.length === 1) {
+                isDragging = true;
+                dragStartX = e.touches[0].clientX;
+                dragStartY = e.touches[0].clientY;
+                dragLastX = viewerTranslateX;
+                dragLastY = viewerTranslateY;
+                e.preventDefault();
+            }
+        }, { passive: false });
+
+        document.addEventListener('touchmove', function (e) {
+            if (!isDragging) return;
+            var dx = (e.touches[0].clientX - dragStartX) / viewerScale;
+            var dy = (e.touches[0].clientY - dragStartY) / viewerScale;
+            viewerTranslateX = dragLastX + dx;
+            viewerTranslateY = dragLastY + dy;
+            updateViewerTransform();
+        }, { passive: false });
+
+        document.addEventListener('touchend', function () {
+            isDragging = false;
+        });
+
+        $('#image-viewer').addEventListener('wheel', function (e) {
+            e.preventDefault();
+            if (e.deltaY < 0) {
+                zoomIn();
+            } else {
+                zoomOut();
+            }
+        }, { passive: false });
+
+        document.addEventListener('keydown', function (e) {
+            var viewer = $('#image-viewer');
+            if (viewer.classList.contains('hidden')) return;
+            if (e.key === 'Escape') {
+                closeImageViewer();
+            } else if (e.key === '+' || e.key === '=') {
+                zoomIn();
+            } else if (e.key === '-') {
+                zoomOut();
+            }
         });
     }
 

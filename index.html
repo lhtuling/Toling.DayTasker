@@ -1,12 +1,15 @@
 <!DOCTYPE html>
 <html lang="zh-CN">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>每日诗词 · 智能学习系统</title>
-    <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>📜</text></svg>">
+    <link rel="icon"
+        href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>📜</text></svg>">
     <link rel="stylesheet" href="style.css">
 </head>
+
 <body>
     <div id="app">
         <div class="bg-overlay"></div>
@@ -16,11 +19,21 @@
                 <span class="app-title">每日诗词</span>
             </div>
             <div class="nav-right">
+                <button id="btn-home" class="nav-btn" title="回到主页">
+                    <svg viewBox="0 0 24 24" width="20" height="20">
+                        <path fill="currentColor" d="M10 20v-6h4v6h5v-8h3L12 3 2 12h3v8z" />
+                    </svg>
+                </button>
                 <button id="btn-stats" class="nav-btn" title="学习统计">
-                    <svg viewBox="0 0 24 24" width="20" height="20"><path fill="currentColor" d="M3 13h2v8H3zm4-4h2v12H7zm4-4h2v16h-2zm4 8h2v8h-2zm4-4h2v12h-2z"/></svg>
+                    <svg viewBox="0 0 24 24" width="20" height="20">
+                        <path fill="currentColor" d="M3 13h2v8H3zm4-4h2v12H7zm4-4h2v16h-2zm4 8h2v8h-2zm4-4h2v12h-2z" />
+                    </svg>
                 </button>
                 <button id="btn-data" class="nav-btn" title="数据管理">
-                    <svg viewBox="0 0 24 24" width="20" height="20"><path fill="currentColor" d="M12 2C6.48 2 2 4.69 2 8v8c0 3.31 4.48 6 10 6s10-2.69 10-6V8c0-3.31-4.48-6-10-6zm0 2c4.42 0 8 1.79 8 4s-3.58 4-8 4-8-1.79-8-4 3.58-4 8-4zM4 16v-2.47c1.82 1.47 4.74 2.47 8 2.47s6.18-1 8-2.47V16c0 2.21-3.58 4-8 4s-8-1.79-8-4zm0-4v-2.47C5.82 10.97 8.74 12 12 12s6.18-1 8-2.47V12c0 2.21-3.58 4-8 4s-8-1.79-8-4z"/></svg>
+                    <svg viewBox="0 0 24 24" width="20" height="20">
+                        <path fill="currentColor"
+                            d="M12 2C6.48 2 2 4.69 2 8v8c0 3.31 4.48 6 10 6s10-2.69 10-6V8c0-3.31-4.48-6-10-6zm0 2c4.42 0 8 1.79 8 4s-3.58 4-8 4-8-1.79-8-4 3.58-4 8-4zM4 16v-2.47c1.82 1.47 4.74 2.47 8 2.47s6.18-1 8-2.47V16c0 2.21-3.58 4-8 4s-8-1.79-8-4zm0-4v-2.47C5.82 10.97 8.74 12 12 12s6.18-1 8-2.47V12c0 2.21-3.58 4-8 4s-8-1.79-8-4z" />
+                    </svg>
                 </button>
             </div>
         </nav>
@@ -62,6 +75,10 @@
                     <div class="done-icon">🎉</div>
                     <p>今日学习已完成！</p>
                     <p class="done-sub">明日再来，坚持就是胜利</p>
+                    <button class="btn-continue hidden" id="btn-continue-learn">
+                        <span class="btn-continue-icon">📚</span>
+                        <span>继续学一首</span>
+                    </button>
                 </div>
             </section>
 
@@ -70,10 +87,18 @@
                     <div class="poem-badge" id="poem-badge">新学</div>
                     <h3 class="poem-title" id="poem-title"></h3>
                     <p class="poem-author" id="poem-author"></p>
-                    <div class="poem-content" id="poem-content"></div>
-                    <div class="poem-pinyin" id="poem-pinyin"></div>
-                    <div class="poem-notes" id="poem-notes"></div>
-                    <div class="poem-analysis" id="poem-analysis"></div>
+                    <div class="poem-detail" id="poem-detail">
+                        <div class="poem-content" id="poem-content"></div>
+                        <div class="poem-pinyin" id="poem-pinyin"></div>
+                        <div class="poem-notes" id="poem-notes"></div>
+                        <div class="poem-analysis" id="poem-analysis"></div>
+                    </div>
+                    <div class="poem-image-wrap" id="poem-image-wrap">
+                        <img class="poem-image" id="poem-image" alt="诗词配图">
+                    </div>
+                    <button class="btn-show-poem hidden" id="btn-show-poem">
+                        <span>📖 显示诗词内容</span>
+                    </button>
                 </div>
                 <div class="action-buttons" id="action-buttons">
                     <div class="main-actions">
@@ -95,6 +120,33 @@
                     </button>
                 </div>
             </section>
+
+            <div class="image-viewer hidden" id="image-viewer">
+                <div class="viewer-backdrop" id="viewer-backdrop"></div>
+                <div class="viewer-container">
+                    <img class="viewer-image" id="viewer-image" alt="诗词配图">
+                </div>
+                <div class="viewer-controls">
+                    <button class="viewer-btn" id="viewer-zoom-in" title="放大">
+                        <svg viewBox="0 0 24 24" width="24" height="24">
+                            <path fill="currentColor"
+                                d="M15.5 14h-.79l-.28-.27A6.471 6.471 0 0016 9.5 6.5 6.5 0 109.5 16c1.61 0 3.09-.59 4.23-1.57l.27.28v.79l5 4.99L20.49 19l-4.99-5zm-6 0C7.01 14 5 11.99 5 9.5S7.01 5 9.5 5 14 7.01 14 9.5 11.99 14 9.5 14zM12 10h-2v2H9v-2H7V9h2V7h1v2h2v1z" />
+                        </svg>
+                    </button>
+                    <button class="viewer-btn" id="viewer-zoom-out" title="缩小">
+                        <svg viewBox="0 0 24 24" width="24" height="24">
+                            <path fill="currentColor"
+                                d="M15.5 14h-.79l-.28-.27A6.471 6.471 0 0016 9.5 6.5 6.5 0 109.5 16c1.61 0 3.09-.59 4.23-1.57l.27.28v.79l5 4.99L20.49 19l-4.99-5zm-6 0C7.01 14 5 11.99 5 9.5S7.01 5 9.5 5 14 7.01 14 9.5 11.99 14 9.5 14zM7 9h5v1H7z" />
+                        </svg>
+                    </button>
+                    <button class="viewer-btn" id="viewer-close" title="关闭">
+                        <svg viewBox="0 0 24 24" width="24" height="24">
+                            <path fill="currentColor"
+                                d="M19 6.41L17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12z" />
+                        </svg>
+                    </button>
+                </div>
+            </div>
 
             <section id="page-stats" class="page">
                 <div class="page-title-bar">
@@ -182,4 +234,5 @@
     <script src="poems-data.js"></script>
     <script src="app.js"></script>
 </body>
+
 </html>
