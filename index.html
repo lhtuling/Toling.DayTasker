@@ -1,0 +1,185 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>每日诗词 · 智能学习系统</title>
+    <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>📜</text></svg>">
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <div id="app">
+        <div class="bg-overlay"></div>
+        <nav class="top-bar">
+            <div class="nav-left">
+                <span class="logo">📜</span>
+                <span class="app-title">每日诗词</span>
+            </div>
+            <div class="nav-right">
+                <button id="btn-stats" class="nav-btn" title="学习统计">
+                    <svg viewBox="0 0 24 24" width="20" height="20"><path fill="currentColor" d="M3 13h2v8H3zm4-4h2v12H7zm4-4h2v16h-2zm4 8h2v8h-2zm4-4h2v12h-2z"/></svg>
+                </button>
+                <button id="btn-data" class="nav-btn" title="数据管理">
+                    <svg viewBox="0 0 24 24" width="20" height="20"><path fill="currentColor" d="M12 2C6.48 2 2 4.69 2 8v8c0 3.31 4.48 6 10 6s10-2.69 10-6V8c0-3.31-4.48-6-10-6zm0 2c4.42 0 8 1.79 8 4s-3.58 4-8 4-8-1.79-8-4 3.58-4 8-4zM4 16v-2.47c1.82 1.47 4.74 2.47 8 2.47s6.18-1 8-2.47V16c0 2.21-3.58 4-8 4s-8-1.79-8-4zm0-4v-2.47C5.82 10.97 8.74 12 12 12s6.18-1 8-2.47V12c0 2.21-3.58 4-8 4s-8-1.79-8-4z"/></svg>
+                </button>
+            </div>
+        </nav>
+
+        <main class="main-content">
+            <section id="page-home" class="page active">
+                <div class="home-header">
+                    <h2 class="date-display"></h2>
+                    <div class="progress-bar-wrap">
+                        <div class="progress-bar" id="daily-progress">
+                            <div class="progress-fill"></div>
+                        </div>
+                        <span class="progress-text" id="progress-text">今日进度 0/0</span>
+                    </div>
+                </div>
+                <div class="home-status" id="home-status">
+                    <div class="status-card">
+                        <span class="status-num" id="stat-new">0</span>
+                        <span class="status-label">今日新学</span>
+                    </div>
+                    <div class="status-card">
+                        <span class="status-num" id="stat-review">0</span>
+                        <span class="status-label">待复习</span>
+                    </div>
+                    <div class="status-card">
+                        <span class="status-num" id="stat-mastered">0</span>
+                        <span class="status-label">已熟知</span>
+                    </div>
+                    <div class="status-card">
+                        <span class="status-num" id="stat-total">0</span>
+                        <span class="status-label">诗词总数</span>
+                    </div>
+                </div>
+                <button class="btn-start" id="btn-start-learn">
+                    <span class="btn-start-icon">📖</span>
+                    <span>开始学习</span>
+                </button>
+                <div class="home-done hidden" id="home-done">
+                    <div class="done-icon">🎉</div>
+                    <p>今日学习已完成！</p>
+                    <p class="done-sub">明日再来，坚持就是胜利</p>
+                </div>
+            </section>
+
+            <section id="page-learn" class="page">
+                <div class="poem-card" id="poem-card">
+                    <div class="poem-badge" id="poem-badge">新学</div>
+                    <h3 class="poem-title" id="poem-title"></h3>
+                    <p class="poem-author" id="poem-author"></p>
+                    <div class="poem-content" id="poem-content"></div>
+                    <div class="poem-pinyin" id="poem-pinyin"></div>
+                    <div class="poem-notes" id="poem-notes"></div>
+                    <div class="poem-analysis" id="poem-analysis"></div>
+                </div>
+                <div class="action-buttons" id="action-buttons">
+                    <div class="main-actions">
+                        <button class="btn-action btn-know" data-action="know">
+                            <span class="btn-icon">😊</span>
+                            <span>认识</span>
+                        </button>
+                        <button class="btn-action btn-fuzzy" data-action="fuzzy">
+                            <span class="btn-icon">🤔</span>
+                            <span>模糊</span>
+                        </button>
+                        <button class="btn-action btn-forget" data-action="forget">
+                            <span class="btn-icon">😵</span>
+                            <span>忘记</span>
+                        </button>
+                    </div>
+                    <button class="btn-mastered" data-action="mastered">
+                        <span>🏆 已熟知（不再复习）</span>
+                    </button>
+                </div>
+            </section>
+
+            <section id="page-stats" class="page">
+                <div class="page-title-bar">
+                    <button class="btn-back" id="btn-back-stats">←</button>
+                    <h2>学习统计</h2>
+                </div>
+                <div class="stats-grid">
+                    <div class="stat-block">
+                        <div class="stat-big" id="stats-learned">0</div>
+                        <div class="stat-desc">已学习</div>
+                    </div>
+                    <div class="stat-block">
+                        <div class="stat-big" id="stats-reviewing">0</div>
+                        <div class="stat-desc">复习中</div>
+                    </div>
+                    <div class="stat-block">
+                        <div class="stat-big" id="stats-mastered">0</div>
+                        <div class="stat-desc">已熟知</div>
+                    </div>
+                    <div class="stat-block">
+                        <div class="stat-big" id="stats-remaining">0</div>
+                        <div class="stat-desc">未学习</div>
+                    </div>
+                </div>
+                <div class="memory-chart" id="memory-chart">
+                    <h3>记忆等级分布</h3>
+                    <div class="chart-bars" id="chart-bars"></div>
+                </div>
+                <div class="poem-list-section">
+                    <h3>诗词列表</h3>
+                    <div class="poem-filter">
+                        <button class="filter-btn active" data-filter="all">全部</button>
+                        <button class="filter-btn" data-filter="learning">学习中</button>
+                        <button class="filter-btn" data-filter="mastered">已熟知</button>
+                        <button class="filter-btn" data-filter="unlearned">未学习</button>
+                    </div>
+                    <div class="poem-list" id="poem-list"></div>
+                </div>
+            </section>
+
+            <section id="page-data" class="page">
+                <div class="page-title-bar">
+                    <button class="btn-back" id="btn-back-data">←</button>
+                    <h2>数据管理</h2>
+                </div>
+                <div class="data-actions">
+                    <div class="data-card">
+                        <div class="data-icon">📤</div>
+                        <h3>导出数据</h3>
+                        <p>将学习数据导出为文件，可用于备份或跨设备同步</p>
+                        <button class="btn-data-action" id="btn-export">导出数据库</button>
+                    </div>
+                    <div class="data-card">
+                        <div class="data-icon">📥</div>
+                        <h3>导入数据</h3>
+                        <p>从备份文件恢复学习数据，导入后将覆盖当前数据</p>
+                        <button class="btn-data-action" id="btn-import">导入数据库</button>
+                        <input type="file" id="file-import" accept=".db,.sqlite,.sqlite3" style="display:none">
+                    </div>
+                    <div class="data-card data-card-danger">
+                        <div class="data-icon">🗑️</div>
+                        <h3>重置数据</h3>
+                        <p>清除所有学习记录，恢复初始状态（诗词库保留）</p>
+                        <button class="btn-data-action btn-danger" id="btn-reset">重置学习记录</button>
+                    </div>
+                </div>
+            </section>
+        </main>
+
+        <div class="toast hidden" id="toast"></div>
+
+        <div class="modal-overlay hidden" id="modal-overlay">
+            <div class="modal" id="modal">
+                <h3 id="modal-title"></h3>
+                <p id="modal-msg"></p>
+                <div class="modal-actions">
+                    <button class="btn-modal btn-modal-cancel" id="modal-cancel">取消</button>
+                    <button class="btn-modal btn-modal-confirm" id="modal-confirm">确认</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/sql.js/1.10.3/sql-wasm.js"></script>
+    <script src="poems-data.js"></script>
+    <script src="app.js"></script>
+</body>
+</html>
