@@ -140,6 +140,29 @@ body {
     padding: 20px 16px 40px;
 }
 
+#page-learn::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background-image: var(--poem-bg, none);
+    background-size: contain;
+    background-position: center;
+    background-repeat: repeat-y;
+    opacity: 0.9;
+    filter: blur(3px);
+    z-index: -1;
+    border-radius: var(--radius-lg);
+    transition: opacity 0.3s ease;
+}
+
+#page-learn {
+    position: relative;
+    overflow: hidden;
+}
+
 .page {
     display: none;
     animation: fadeSlideIn 0.4s ease-out;
@@ -291,13 +314,14 @@ body {
 }
 
 .status-card {
-    background: white;
+    background: rgba(255, 255, 255, 0.8);
     border-radius: var(--radius);
     padding: 16px 8px;
     text-align: center;
     box-shadow: 0 2px 12px var(--shadow);
     border: 1px solid rgba(139, 69, 19, 0.08);
     transition: var(--transition);
+    backdrop-filter: blur(5px);
 }
 
 .status-card:hover {
@@ -625,7 +649,8 @@ body {
 }
 
 .poem-card {
-    background: white;
+    background: rgba(255, 255, 255, 0.55);
+    text-shadow: 0px 0px 12px #ffffff;
     border-radius: var(--radius-lg);
     padding: 28px 24px;
     box-shadow: 0 4px 30px var(--shadow);
@@ -634,6 +659,7 @@ body {
     position: relative;
     overflow: hidden;
     animation: cardSlideIn 0.5s ease-out;
+    backdrop-filter: blur(10px);
 }
 
 .poem-card::before {
@@ -668,6 +694,7 @@ body {
     text-align: center;
     margin-bottom: 8px;
     letter-spacing: 3px;
+    opacity: 0.9;
 }
 
 .poem-author {
@@ -676,6 +703,7 @@ body {
     font-size: 0.9rem;
     margin-bottom: 24px;
     letter-spacing: 2px;
+    opacity: 0.8;
 }
 
 .poem-content {
@@ -685,6 +713,7 @@ body {
     color: var(--text-dark);
     margin-bottom: 20px;
     letter-spacing: 2px;
+    opacity: 0.95;
 }
 
 .poem-content .line {
@@ -736,6 +765,7 @@ body {
     background: linear-gradient(135deg, rgba(201, 169, 110, 0.08), rgba(212, 165, 116, 0.05));
     border-radius: var(--radius);
     border-left: 3px solid var(--gold);
+    opacity: 0.9;
 }
 
 .poem-notes::before {
@@ -764,6 +794,7 @@ body {
     background: linear-gradient(135deg, rgba(139, 69, 19, 0.05), rgba(139, 69, 19, 0.02));
     border-radius: var(--radius);
     border-left: 3px solid var(--primary-light);
+    opacity: 0.9;
 }
 
 .poem-analysis::before {
@@ -922,7 +953,7 @@ body {
     height: 36px;
     border-radius: 50%;
     border: 1px solid rgba(139, 69, 19, 0.2);
-    background: white;
+    background: rgba(255, 255, 255, 0.8);
     color: var(--primary);
     font-size: 1.2rem;
     cursor: pointer;
@@ -930,6 +961,7 @@ body {
     align-items: center;
     justify-content: center;
     transition: var(--transition);
+    backdrop-filter: blur(5px);
 }
 
 .btn-back:hover {
@@ -945,12 +977,13 @@ body {
 }
 
 .stat-block {
-    background: white;
+    background: rgba(255, 255, 255, 0.8);
     border-radius: var(--radius);
     padding: 20px 8px;
     text-align: center;
     box-shadow: 0 2px 12px var(--shadow);
     border: 1px solid rgba(139, 69, 19, 0.08);
+    backdrop-filter: blur(5px);
 }
 
 .stat-big {
@@ -966,11 +999,12 @@ body {
 }
 
 .memory-chart {
-    background: white;
+    background: rgba(255, 255, 255, 0.8);
     border-radius: var(--radius);
     padding: 20px;
     box-shadow: 0 2px 12px var(--shadow);
     margin-bottom: 28px;
+    backdrop-filter: blur(5px);
 }
 
 .memory-chart h3 {
@@ -1023,10 +1057,11 @@ body {
 }
 
 .poem-list-section {
-    background: white;
+    background: rgba(255, 255, 255, 0.8);
     border-radius: var(--radius);
     padding: 20px;
     box-shadow: 0 2px 12px var(--shadow);
+    backdrop-filter: blur(5px);
 }
 
 .poem-list-section h3 {
@@ -1133,12 +1168,13 @@ body {
 }
 
 .data-card {
-    background: white;
+    background: rgba(255, 255, 255, 0.8);
     border-radius: var(--radius);
     padding: 24px;
     box-shadow: 0 2px 12px var(--shadow);
     text-align: center;
     border: 1px solid rgba(139, 69, 19, 0.08);
+    backdrop-filter: blur(5px);
 }
 
 .data-card-danger {
@@ -1248,13 +1284,14 @@ body {
 }
 
 .modal {
-    background: white;
+    background: rgba(255, 255, 255, 0.9);
     border-radius: var(--radius-lg);
     padding: 28px;
     max-width: 380px;
     width: 100%;
     box-shadow: 0 10px 40px rgba(0, 0, 0, 0.2);
     animation: bounceIn 0.3s ease-out;
+    backdrop-filter: blur(10px);
 }
 
 .modal h3 {
@@ -1423,8 +1460,9 @@ body {
     .data-card,
     .poem-card,
     .modal {
-        background: #2a2018;
+        background: rgba(42, 32, 24, 0.55);
         border-color: rgba(201, 169, 110, 0.15);
+        backdrop-filter: blur(10px);
     }
     .progress-bar {
         background: rgba(201, 169, 110, 0.15);

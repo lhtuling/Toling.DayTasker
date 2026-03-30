@@ -82,6 +82,29 @@
             target.offsetHeight;
             target.style.animation = '';
         }
+
+        if (pageId !== 'page-learn') {
+            $('#page-learn').style.setProperty('--poem-bg', 'none');
+        }
+
+        // 滚动到顶部，0.3秒动画
+        const startPosition = window.pageYOffset;
+        const startTime = performance.now();
+        const duration = 300; // 0.3秒
+
+        function animateScroll(currentTime) {
+            const elapsed = currentTime - startTime;
+            const progress = Math.min(elapsed / duration, 1);
+            const easeProgress = 1 - Math.pow(1 - progress, 3); // 缓动函数
+
+            window.scrollTo(0, startPosition * (1 - easeProgress));
+
+            if (progress < 1) {
+                requestAnimationFrame(animateScroll);
+            }
+        }
+
+        requestAnimationFrame(animateScroll);
     }
 
     async function initDB() {
@@ -362,13 +385,17 @@
         btnShowPoem.classList.add('hidden');
 
         var imgSrc = 'img/' + poem.id + '.png';
+        var pageLearn = $('#page-learn');
+        pageLearn.style.setProperty('--poem-bg', 'none');
         var testImg = new Image();
         testImg.onload = function () {
             poemImg.src = imgSrc;
             imgWrap.classList.remove('no-image');
+            pageLearn.style.setProperty('--poem-bg', "url('" + imgSrc + "')");
         };
         testImg.onerror = function () {
             imgWrap.classList.add('no-image');
+            pageLearn.style.setProperty('--poem-bg', 'none');
         };
         testImg.src = imgSrc;
 
@@ -382,7 +409,24 @@
         card.offsetHeight;
         card.style.animation = 'cardSlideIn 0.5s ease-out';
 
-        window.scrollTo({ top: 0, behavior: 'smooth' });
+        // 滚动到顶部，0.3秒动画
+        const startPosition = window.pageYOffset;
+        const startTime = performance.now();
+        const duration = 300; // 0.3秒
+
+        function animateScroll(currentTime) {
+            const elapsed = currentTime - startTime;
+            const progress = Math.min(elapsed / duration, 1);
+            const easeProgress = 1 - Math.pow(1 - progress, 3); // 缓动函数
+
+            window.scrollTo(0, startPosition * (1 - easeProgress));
+
+            if (progress < 1) {
+                requestAnimationFrame(animateScroll);
+            }
+        }
+
+        requestAnimationFrame(animateScroll);
     }
 
     function processAction(action) {
@@ -784,6 +828,25 @@
         poemDetail.classList.remove('collapsed');
         poemDetail.classList.add('expanding');
         btnShowPoem.classList.add('hidden');
+
+        // 滚动到顶部，0.3秒动画
+        const startPosition = window.pageYOffset;
+        const startTime = performance.now();
+        const duration = 300; // 0.3秒
+
+        function animateScroll(currentTime) {
+            const elapsed = currentTime - startTime;
+            const progress = Math.min(elapsed / duration, 1);
+            const easeProgress = 1 - Math.pow(1 - progress, 3); // 缓动函数
+
+            window.scrollTo(0, startPosition * (1 - easeProgress));
+
+            if (progress < 1) {
+                requestAnimationFrame(animateScroll);
+            }
+        }
+
+        requestAnimationFrame(animateScroll);
     }
 
     function bindEvents() {
