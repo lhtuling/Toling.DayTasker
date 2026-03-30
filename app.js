@@ -454,10 +454,23 @@
         const btnStart = $('#btn-start-learn');
         const homeDone = $('#home-done');
         const btnContinue = $('#btn-continue-learn');
+        const btnAdvanceReview = $('#btn-advance-review');
 
         if (todayQueue.length === 0 || currentIndex >= todayQueue.length) {
             btnStart.classList.add('hidden');
             homeDone.classList.remove('hidden');
+
+            const tomorrowStr = addDays(todayStr, 1);
+            const tomorrowReviewRows = db.exec(
+                `SELECT COUNT(*) FROM learning
+                 WHERE mastered = 0 AND next_review = ?`, [tomorrowStr]
+            );
+            const tomorrowCount = (tomorrowReviewRows[0] && tomorrowReviewRows[0].values[0]) ? tomorrowReviewRows[0].values[0][0] : 0;
+            if (tomorrowCount > 0) {
+                btnAdvanceReview.classList.remove('hidden');
+            } else {
+                btnAdvanceReview.classList.add('hidden');
+            }
 
             const unlearnedRows = db.exec(
                 `SELECT p.id FROM poems p
@@ -473,6 +486,7 @@
             btnStart.classList.remove('hidden');
             homeDone.classList.add('hidden');
             btnContinue.classList.add('hidden');
+            btnAdvanceReview.classList.add('hidden');
         }
     }
 
@@ -670,6 +684,30 @@
         updateHomePage();
     }
 
+    function advanceReview() {
+        const tomorrowStr = addDays(todayStr, 1);
+        const advanceRows = db.exec(
+            `SELECT poem_id FROM learning
+             WHERE mastered = 0 AND next_review = ?
+             ORDER BY memory_level ASC`, [tomorrowStr]
+        );
+
+        if (advanceRows.length === 0 || advanceRows[0].values.length === 0) {
+            showToast('明天没有需要复习的内容');
+            return;
+        }
+
+        todayQueue = [];
+        advanceRows[0].values.forEach(row => {
+            todayQueue.push({ poemId: row[0], type: 'review' });
+        });
+
+        currentIndex = 0;
+        navigateTo('page-learn');
+        renderPoem(todayQueue[0]);
+        showToast('⏩ 开始提前复习明天的 ' + todayQueue.length + ' 首诗词');
+    }
+
     function continueLearn() {
         const unlearnedRows = db.exec(
             `SELECT p.id FROM poems p
@@ -806,6 +844,8 @@
         $('#btn-reset').addEventListener('click', resetData);
 
         $('#btn-continue-learn').addEventListener('click', continueLearn);
+
+        $('#btn-advance-review').addEventListener('click', advanceReview);
 
         $$('.filter-btn').forEach(btn => {
             btn.addEventListener('click', () => {
