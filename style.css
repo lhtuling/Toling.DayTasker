@@ -812,6 +812,25 @@ body {
     line-height: 1.8;
 }
 
+.analysis-section {
+    font-size: 0.9rem;
+    color: var(--text-mid);
+    line-height: 1.8;
+    margin-bottom: 10px;
+    text-indent: 2em;
+}
+
+.analysis-section:last-child {
+    margin-bottom: 0;
+}
+
+.analysis-label {
+    font-weight: 700;
+    color: var(--primary);
+    text-indent: 0;
+    display: inline;
+}
+
 .action-buttons {
     position: fixed;
     bottom: 0;
@@ -1113,6 +1132,12 @@ body {
     padding: 10px 12px;
     border-bottom: 1px solid rgba(139, 69, 19, 0.06);
     transition: var(--transition);
+    cursor: pointer;
+}
+
+.poem-list-item:active {
+    background: rgba(139, 69, 19, 0.08);
+    transform: scale(0.98);
 }
 
 .poem-list-item:last-child {
@@ -1138,12 +1163,31 @@ body {
     color: var(--text-light);
 }
 
+.poem-list-right {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    flex-shrink: 0;
+}
+
 .poem-list-status {
     font-size: 0.7rem;
     padding: 3px 10px;
     border-radius: 12px;
     font-weight: 600;
     flex-shrink: 0;
+}
+
+.poem-list-arrow {
+    font-size: 1.2rem;
+    color: var(--text-light);
+    opacity: 0.5;
+    transition: var(--transition);
+}
+
+.poem-list-item:hover .poem-list-arrow {
+    opacity: 1;
+    color: var(--primary);
 }
 
 .status-unlearned {
@@ -1503,4 +1547,288 @@ body {
     .action-buttons {
         background: linear-gradient(to top, #1a1410 85%, transparent);
     }
+}
+
+
+/* ── 诗词管理页 ─────────────────────────────────────────────── */
+
+.admin-header {
+    margin-bottom: 16px;
+}
+
+.btn-admin-add {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    padding: 10px 20px;
+    background: linear-gradient(135deg, var(--primary), var(--primary-dark));
+    color: var(--gold-light);
+    border: none;
+    border-radius: var(--radius);
+    font-size: 0.9rem;
+    font-weight: 600;
+    font-family: inherit;
+    cursor: pointer;
+    transition: var(--transition);
+    letter-spacing: 1px;
+}
+
+.btn-admin-add:hover {
+    transform: translateY(-1px);
+    box-shadow: 0 4px 15px rgba(139, 69, 19, .3);
+}
+
+.admin-form-wrap {
+    background: rgba(255, 255, 255, .8);
+    border-radius: var(--radius);
+    padding: 20px;
+    margin-bottom: 20px;
+    box-shadow: 0 2px 12px var(--shadow);
+    border: 1px solid rgba(139, 69, 19, .08);
+    backdrop-filter: blur(5px);
+    animation: fadeSlideIn .3s ease-out;
+}
+
+.admin-form-title {
+    font-size: 1rem;
+    color: var(--primary-dark);
+    margin-bottom: 16px;
+    padding-bottom: 10px;
+    border-bottom: 1px solid rgba(139, 69, 19, .1);
+    letter-spacing: 1px;
+}
+
+.form-row {
+    margin-bottom: 12px;
+}
+
+.form-row label {
+    display: block;
+    font-size: .8rem;
+    color: var(--text-mid);
+    margin-bottom: 4px;
+    font-weight: 600;
+}
+
+.form-row input,
+.form-row textarea {
+    width: 100%;
+    padding: 8px 12px;
+    border: 1px solid rgba(139, 69, 19, .2);
+    border-radius: 8px;
+    font-size: .9rem;
+    font-family: inherit;
+    background: rgba(255, 255, 255, .7);
+    color: var(--text-dark);
+    resize: vertical;
+    transition: border-color .2s;
+}
+
+.form-row input:focus,
+.form-row textarea:focus {
+    outline: none;
+    border-color: var(--primary-light);
+    background: rgba(255, 255, 255, .9);
+}
+
+.json-hint {
+    font-size: .7rem;
+    color: var(--text-light);
+    font-weight: 400;
+}
+
+.conflict-pre {
+    font-family: monospace;
+    font-size: .75rem;
+    color: var(--primary-dark);
+    background: rgba(139, 69, 19, .05);
+    padding: 8px 12px;
+    border-radius: 6px;
+    margin: 8px 0;
+    white-space: pre-wrap;
+    word-break: break-all;
+    max-height: 200px;
+    overflow-y: auto;
+}
+
+
+/* 诗词详情弹窗 */
+
+.detail-author {
+    font-size: .85rem;
+    color: var(--text-light);
+    margin-bottom: 10px;
+}
+
+.detail-content {
+    margin-bottom: 12px;
+}
+
+.detail-line {
+    display: flex;
+    justify-content: space-between;
+    padding: 3px 0;
+    border-bottom: 1px dashed rgba(139, 69, 19, .1);
+    font-size: 1.1rem;
+    line-height: 1.6;
+}
+
+.detail-text {
+    flex: 1;
+}
+
+.detail-pinyin {
+    flex: 0 0 45%;
+    text-align: right;
+    color: var(--text-light);
+    font-size: .8rem;
+}
+
+.detail-keywords {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px;
+    margin-bottom: 10px;
+}
+
+.detail-kw {
+    background: rgba(139, 69, 19, .08);
+    padding: 3px 10px;
+    border-radius: 12px;
+    font-size: .8rem;
+}
+
+.detail-analysis {
+    margin-top: 10px;
+}
+
+.detail-section-title {
+    font-weight: 600;
+    font-size: .78rem;
+    color: var(--primary-dark);
+    margin-bottom: 6px;
+    margin-top: 8px;
+    padding-bottom: 4px;
+    border-bottom: 1px solid rgba(139, 69, 19, .15);
+}
+
+.detail-line-note {
+    display: flex;
+    gap: 8px;
+    padding: 4px 0;
+    font-size: .82rem;
+    line-height: 1.5;
+}
+
+.detail-line-note-text {
+    flex: 0 0 auto;
+    color: var(--text-color);
+    font-weight: 500;
+}
+
+.detail-line-note-note {
+    flex: 1;
+    color: var(--text-light);
+}
+
+.detail-overall {
+    font-size: .85rem;
+    color: var(--text-light);
+    line-height: 1.6;
+    background: rgba(139, 69, 19, .04);
+    padding: 8px 10px;
+    border-radius: 6px;
+    margin-top: 6px;
+}
+
+.admin-form-actions {
+    display: flex;
+    gap: 12px;
+    margin-top: 16px;
+    padding-top: 16px;
+    border-top: 1px solid rgba(139, 69, 19, .1);
+}
+
+.admin-poem-list {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+}
+
+.admin-poem-item {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    background: rgba(255, 255, 255, .7);
+    border: 1px solid rgba(139, 69, 19, .08);
+    border-radius: var(--radius);
+    padding: 12px 14px;
+    transition: var(--transition);
+    backdrop-filter: blur(5px);
+}
+
+.admin-poem-item:hover {
+    background: rgba(255, 255, 255, .9);
+    border-color: rgba(139, 69, 19, .15);
+}
+
+.admin-poem-info {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    flex: 1;
+    min-width: 0;
+}
+
+.admin-poem-id {
+    font-size: .75rem;
+    color: var(--text-light);
+    min-width: 32px;
+    flex-shrink: 0;
+}
+
+.admin-poem-title {
+    font-size: .9rem;
+    color: var(--text-dark);
+    font-weight: 600;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.admin-poem-author {
+    font-size: .75rem;
+    color: var(--text-light);
+    flex-shrink: 0;
+}
+
+.admin-poem-actions {
+    display: flex;
+    gap: 6px;
+    flex-shrink: 0;
+}
+
+.admin-poem-edit,
+.admin-poem-del {
+    padding: 4px 10px;
+    border-radius: 6px;
+    border: 1px solid rgba(139, 69, 19, .15);
+    background: transparent;
+    font-size: .75rem;
+    font-family: inherit;
+    cursor: pointer;
+    transition: var(--transition);
+    color: var(--text-mid);
+}
+
+.admin-poem-edit:hover {
+    background: var(--primary);
+    border-color: var(--primary);
+    color: white;
+}
+
+.admin-poem-del:hover {
+    background: var(--red);
+    border-color: var(--red);
+    color: white;
 }

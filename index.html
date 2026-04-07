@@ -29,6 +29,11 @@
                         <path fill="currentColor" d="M3 13h2v8H3zm4-4h2v12H7zm4-4h2v16h-2zm4 8h2v8h-2zm4-4h2v12h-2z" />
                     </svg>
                 </button>
+                <button id="btn-admin" class="nav-btn" title="诗词管理">
+                    <svg viewBox="0 0 24 24" width="20" height="20">
+                        <path fill="currentColor" d="M3 17.25V21h3.75L17.81 9.94l-3.75-3.75L3 17.25zM20.71 7.04c.39-.39.39-1.02 0-1.41l-2.34-2.34a.9959.9959 0 00-1.41 0l-1.83 1.83 3.75 3.75 1.83-1.83z"/>
+                    </svg>
+                </button>
                 <button id="btn-data" class="nav-btn" title="数据管理">
                     <svg viewBox="0 0 24 24" width="20" height="20">
                         <path fill="currentColor"
@@ -189,6 +194,30 @@
                     </div>
                     <div class="poem-list" id="poem-list"></div>
                 </div>
+            </section>
+
+            <section id="page-admin" class="page">
+                <div class="page-title-bar">
+                    <button class="btn-back" id="btn-back-admin">←</button>
+                    <h2>诗词管理</h2>
+                </div>
+                <div class="admin-header">
+                    <button class="btn-admin-add" id="btn-admin-add">➕ 新增诗词</button>
+                </div>
+                <div class="admin-form-wrap hidden" id="admin-form-wrap">
+                    <h3 class="admin-form-title" id="admin-form-title">新增诗词</h3>
+                    <form id="admin-form">
+                        <div class="form-row">
+                            <label>JSON 数据</label>
+                            <textarea id="admin-poems-json" rows="20" placeholder='[&#10;  {&#10;    "id": 1,&#10;    "title": "静夜思",&#10;    "author": "【唐】李白",&#10;    "content": ["床前明月光，","疑是地上霜。","举头望明月，","低头思故乡。"],&#10;    "pinyin": ["chuáng qián míng yuè guāng，","yí shì dì shàng shuāng。","",""],&#10;    "keywords": [{"word":"明月","note":"明亮的月光"}],&#10;    "analysis": {&#10;      "lineNotes": [&#10;        {"line":"床前明月光，","note":"月光洒在床前。"},&#10;        {"line":"疑是地上霜。","note":"让人以为是地上落了霜。"},&#10;        {"line":"举头望明月，","note":"抬头看天上圆月。"},&#10;        {"line":"低头思故乡。","note":"低头想起远方的故乡。"}&#10;      ],&#10;      "overall": "全诗借月夜思乡，表达游子对故乡的深切思念。"&#10;    }&#10;  }&#10;]'></textarea>
+                        </div>
+                        <div class="admin-form-actions">
+                            <button type="button" class="btn-modal btn-modal-cancel" id="btn-admin-cancel">取消</button>
+                            <button type="submit" class="btn-modal btn-modal-confirm">💾 保存诗词</button>
+                        </div>
+                    </form>
+                </div>
+                <div class="admin-poem-list" id="admin-poem-list"></div>
             </section>
 
             <section id="page-data" class="page">

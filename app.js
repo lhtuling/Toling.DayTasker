@@ -13,6 +13,8 @@
     let dragStartY = 0;
     let dragLastX = 0;
     let dragLastY = 0;
+    let browseMode = false;
+    let browseFromPage = '';
 
     const $ = (sel) => document.querySelector(sel);
     const $$ = (sel) => document.querySelectorAll(sel);
@@ -49,6 +51,57 @@
         }, 2000);
     }
 
+    // 覆盖确认模态框（带取消/确认）
+    function showOverwriteModal(existingPoem, callback) {
+        $('#modal-title').textContent = '⚠️ 诗词 ID 已存在';
+        $('#modal-msg').innerHTML = `id <strong>${existingPoem.id}</strong> 已存在：<br><em>${existingPoem.title}</em><br>确认覆盖吗？`;
+        $('#modal-overlay').classList.remove('hidden');
+
+        const cleanup = () => {
+            $('#modal-confirm').removeEventListener('click', onConfirm);
+            $('#modal-cancel').removeEventListener('click', onCancel);
+        };
+        const onConfirm = () => {
+            cleanup();
+            $('#modal-overlay').classList.add('hidden');
+            callback(true);
+        };
+        const onCancel = () => {
+            cleanup();
+            $('#modal-overlay').classList.add('hidden');
+            callback(false);
+        };
+        $('#modal-confirm').addEventListener('click', onConfirm);
+        $('#modal-cancel').addEventListener('click', onCancel);
+    }
+
+    // 批量覆盖确认（多首有冲突时）
+    function showOverwriteBatchModal(conflictCount, newCount, conflictList, callback) {
+        $('#modal-title').textContent = '⚠️ 检测到 ID 冲突';
+        $('#modal-msg').innerHTML = `
+            共 <strong>${conflictCount}</strong> 首存在 ID 冲突，将被覆盖：<br>
+            <pre class="conflict-pre">${conflictList}</pre>
+            新增 <strong>${newCount}</strong> 首，确认全部保存？
+        `;
+        $('#modal-overlay').classList.remove('hidden');
+        const cleanup = () => {
+            $('#modal-confirm').removeEventListener('click', onConfirm);
+            $('#modal-cancel').removeEventListener('click', onCancel);
+        };
+        const onConfirm = () => {
+            cleanup();
+            $('#modal-overlay').classList.add('hidden');
+            callback(true);
+        };
+        const onCancel = () => {
+            cleanup();
+            $('#modal-overlay').classList.add('hidden');
+            callback(false);
+        };
+        $('#modal-confirm').addEventListener('click', onConfirm);
+        $('#modal-cancel').addEventListener('click', onCancel);
+    }
+
     function showModal(title, msg) {
         return new Promise((resolve) => {
             $('#modal-title').textContent = title;
@@ -71,6 +124,244 @@
             $('#modal-confirm').addEventListener('click', onConfirm);
             $('#modal-cancel').addEventListener('click', onCancel);
         });
+    }
+
+    // ── Admin 页面 ──────────────────────────────────────────────
+    function initAdminPage() {
+        refreshAdminPoemList();
+
+        // 点击"新增诗词"→ 清空表单
+        $('#btn-admin-add').addEventListener('click', () => {
+            $('#admin-form-wrap').classList.remove('hidden');
+            $('#admin-form-title').textContent = '新增诗词';
+            $('#admin-poems-json').value = '[\n  {\n    "id": 1,\n    "title": "",\n    "author": "",\n    "content": [""],\n    "pinyin": [""],\n    "keywords": [],\n    "analysis": ""\n  }\n]';
+            $('#admin-poems-json').scrollIntoView({ behavior: 'smooth', block: 'start' });
+        });
+
+        // 点击"取消"→ 隐藏表单
+        $('#btn-admin-cancel').addEventListener('click', () => {
+            $('#admin-form-wrap').classList.add('hidden');
+        });
+
+        // 提交表单
+        $('#admin-form').addEventListener('submit', (e) => {
+            e.preventDefault();
+            submitAdminForm();
+        });
+    }
+
+    function refreshAdminPoemList() {
+        const rows = db.exec('SELECT * FROM poems ORDER BY id ASC');
+        let html = '';
+        if (rows.length === 0 || rows[0].values.length === 0) {
+            html = '<div style="text-align:center;padding:20px;color:#8D6E63;font-size:0.9rem;">暂无诗词数据</div>';
+        } else {
+            rows[0].values.forEach(r => {
+                const poem = {
+                    id: r[0],
+                    title: r[1],
+                    author: r[2],
+                    content: JSON.parse(r[3]),
+                    pinyin: JSON.parse(r[4]),
+                    keywords: JSON.parse(r[5]),
+                    analysis: r[6]
+                };
+                const poemJson = JSON.stringify(poem).replace(/"/g, '&quot;');
+                html += `
+                    <div class="admin-poem-item" data-id="${poem.id}" data-poem='${poemJson}'>
+                        <div class="admin-poem-info">
+                            <span class="admin-poem-id">${poem.id}</span>
+                            <span class="admin-poem-title">${poem.title}</span>
+                            <span class="admin-poem-author">${poem.author}</span>
+                        </div>
+                        <div class="admin-poem-actions">
+                            <button class="admin-poem-edit" type="button">✏️</button>
+                            <button class="admin-poem-del" type="button">🗑️</button>
+                        </div>
+                    </div>`;
+            });
+        }
+        $('#admin-poem-list').innerHTML = html;
+
+        // 行内事件
+        $$('.admin-poem-item').forEach(item => {
+            // 点整行 → 详情
+            item.querySelector('.admin-poem-info').addEventListener('click', () => {
+                const poem = JSON.parse(item.dataset.poem.replace(/&quot;/g, '"'));
+                showPoemDetailModal(poem);
+            });
+            // 编辑/删除按钮 → 阻止冒泡到详情
+            item.querySelector('.admin-poem-edit').addEventListener('click', e => {
+                e.stopPropagation();
+                openAdminEdit(parseInt(item.dataset.id));
+            });
+            item.querySelector('.admin-poem-del').addEventListener('click', e => {
+                e.stopPropagation();
+                deletePoemById(parseInt(item.dataset.id));
+            });
+        });
+    }
+
+    // 诗词详情弹窗（复用 modal-overlay + #modal）
+    function showPoemDetailModal(poem) {
+        const contentHtml = poem.content.map((line, i) =>
+            `<div class="detail-line">
+                <span class="detail-text">${line}</span>
+                <span class="detail-pinyin">${poem.pinyin[i] || ''}</span>
+            </div>`
+        ).join('');
+        const keywordsHtml = poem.keywords.map(k =>
+            `<span class="detail-kw"><strong>${k.word}</strong>${k.note ? '：' + k.note : ''}</span>`
+        ).join('');
+
+        // analysis 兼容：旧数据是字符串，新格式是对象 { lineNotes, overall }
+        let analysisHtml = '';
+        if (typeof poem.analysis === 'string') {
+            // 旧格式：直接显示
+            analysisHtml = `<div class="detail-analysis"><div class="detail-section-title">通俗解析</div>${poem.analysis}</div>`;
+        } else {
+            const lineNotesHtml = Array.isArray(poem.analysis.lineNotes) ?
+                poem.analysis.lineNotes.map(ln =>
+                    `<div class="detail-line-note">
+                        <span class="detail-line-note-text">${ln.line}</span>
+                        <span class="detail-line-note-note">${ln.note}</span>
+                    </div>`
+                ).join('') :
+                '';
+            const overallHtml = poem.analysis.overall ?
+                `<div class="detail-overall">${poem.analysis.overall}</div>` :
+                '';
+            analysisHtml = `
+                <div class="detail-analysis">
+                    ${poem.analysis.lineNotes ? `<div class="detail-section-title">逐句释义</div>${lineNotesHtml}` : ''}
+                    ${poem.analysis.overall ? `<div class="detail-section-title">整首释义</div>${overallHtml}` : ''}
+                </div>`;
+        }
+
+        $('#modal-title').textContent = poem.title;
+        $('#modal-msg').innerHTML = `
+            <div class="detail-author">${poem.author}</div>
+            <div class="detail-content">${contentHtml}</div>
+            <div class="detail-keywords">${keywordsHtml}</div>
+            ${analysisHtml}
+        `;
+        $('#modal-actions').classList.add('hidden');
+        $('#modal-overlay').classList.remove('hidden');
+        $('#modal-confirm').style.display = 'none';
+        $('#modal-cancel').textContent = '关闭';
+        $('#modal-cancel').style.display = '';
+        // 关闭时恢复原状
+        $('#modal-cancel').onclick = () => {
+            $('#modal-overlay').classList.add('hidden');
+            $('#modal-confirm').style.display = '';
+            $('#modal-cancel').textContent = '取消';
+            $('#modal-actions').classList.remove('hidden');
+        };
+    }
+
+    function openAdminEdit(id) {
+        // 编辑时加载全部诗词到 textarea，可整体修改
+        const rows = db.exec('SELECT id, title, author, content, pinyin, keywords, analysis FROM poems ORDER BY id ASC');
+        if (rows.length === 0 || rows[0].values.length === 0) {
+            showToast('❌ 无诗词数据');
+            return;
+        }
+        const all = rows[0].values.map(r => ({
+            id: r[0],
+            title: r[1],
+            author: r[2],
+            content: JSON.parse(r[3]),
+            pinyin: JSON.parse(r[4]),
+            keywords: JSON.parse(r[5]),
+            analysis: r[6]
+        }));
+        $('#admin-form-wrap').classList.remove('hidden');
+        $('#admin-form-title').textContent = '编辑诗词（全部）';
+        $('#admin-poems-json').value = JSON.stringify(all, null, 2);
+        $('#admin-poems-json').scrollIntoView({ behavior: 'smooth', block: 'start' });
+    }
+
+    function submitAdminForm() {
+        const jsonText = $('#admin-poems-json').value.trim();
+        if (!jsonText) { showToast('❌ 请填写 JSON 数据'); return; }
+
+        let poems;
+        try {
+            const parsed = JSON.parse(jsonText);
+            // 支持直接一个对象或包在数组里
+            poems = Array.isArray(parsed) ? parsed : [parsed];
+        } catch (e) {
+            showToast('❌ JSON 格式错误，请检查');
+            return;
+        }
+
+        // 先把所有 id 找出来，过滤掉无效项
+        const validPoems = poems.filter(p => {
+            if (!p.id || !p.title || !p.author) return false;
+            if (!Array.isArray(p.content)) return false;
+            return true;
+        });
+
+        if (validPoems.length === 0) {
+            showToast('❌ 未找到有效诗词（需 id、title、author、content）');
+            return;
+        }
+
+        // 检查哪些 id 已存在
+        const idsToSave = validPoems.map(p => p.id);
+        const placeholders = idsToSave.map(() => '?').join(',');
+        const existRows = db.exec(`SELECT id, title FROM poems WHERE id IN (${placeholders})`, idsToSave);
+        const existMap = {};
+        if (existRows.length > 0) {
+            existRows[0].values.forEach(r => { existMap[r[0]] = r[1]; });
+        }
+
+        const conflictPoems = validPoems.filter(p => existMap[p.id]);
+        const newPoems = validPoems.filter(p => !existMap[p.id]);
+
+        if (conflictPoems.length === 0) {
+            // 无冲突，直接全部保存
+            batchSave(validPoems);
+        } else {
+            // 有冲突，弹确认框
+            const conflictList = conflictPoems.map(p =>
+                `  id=${p.id}  "${existMap[p.id]}" → "${p.title}"`
+            ).join('\n');
+            showOverwriteBatchModal(conflictPoems.length, newPoems.length, conflictList, (confirmed) => {
+                if (confirmed) batchSave(validPoems);
+            });
+        }
+
+        function batchSave(list) {
+            list.forEach(p => {
+                db.run(
+                    'INSERT OR REPLACE INTO poems (id, title, author, content, pinyin, keywords, analysis) VALUES (?, ?, ?, ?, ?, ?, ?)',
+                    [
+                        p.id,
+                        p.title,
+                        p.author,
+                        JSON.stringify(p.content || []),
+                        JSON.stringify(p.pinyin || []),
+                        JSON.stringify(p.keywords || []),
+                        p.analysis || ''
+                    ]
+                );
+            });
+            saveDB();
+            showToast(`✅ 已保存 ${list.length} 首诗词`);
+            $('#admin-form-wrap').classList.add('hidden');
+            refreshAdminPoemList();
+        }
+    }
+
+    async function deletePoemById(id) {
+        const confirmed = await showModal('删除诗词', `确定删除 id=${id} 的诗词吗？此操作不可恢复。`);
+        if (!confirmed) return;
+        db.run('DELETE FROM poems WHERE id = ?', [id]);
+        db.run('DELETE FROM learning WHERE poem_id = ?', [id]);
+        saveDB();
+        showToast('🗑️ 已删除');
+        refreshAdminPoemList();
     }
 
     function navigateTo(pageId) {
@@ -116,6 +407,20 @@
         if (saved) {
             const buf = Uint8Array.from(atob(saved), c => c.charCodeAt(0));
             db = new SQL.Database(buf);
+            // 迁移旧数据：analysis 从字符串升级为对象 { lineNotes: [], overall: "..." }
+            const rows = db.exec('SELECT id, analysis FROM poems');
+            if (rows.length > 0) {
+                rows[0].values.forEach(([id, raw]) => {
+                    try {
+                        const v = JSON.parse(raw);
+                        if (typeof v === 'string') {
+                            db.run('UPDATE poems SET analysis = ? WHERE id = ?',
+                                [JSON.stringify({ lineNotes: [], overall: v }), id]);
+                        }
+                    } catch (_) { }
+                });
+                saveDB();
+            }
         } else {
             db = new SQL.Database();
         }
@@ -371,7 +676,17 @@
         });
         $('#poem-notes').innerHTML = notesHtml;
 
-        $('#poem-analysis').innerHTML = `<p>${poem.analysis}</p>`;
+        var analysisHtml = '';
+        var analysisParts = poem.analysis.split('\n').filter(function (s) { return s.trim(); });
+        analysisParts.forEach(function (part) {
+            var match = part.match(/^([\u4e00-\u9fa5]+(?:释义|赏析|解读|翻译|大意)[:：])([\s\S]*)$/);
+            if (match) {
+                analysisHtml += '<div class="analysis-section"><span class="analysis-label">' + match[1] + '</span>' + match[2] + '</div>';
+            } else {
+                analysisHtml += '<div class="analysis-section">' + part + '</div>';
+            }
+        });
+        $('#poem-analysis').innerHTML = analysisHtml;
 
         var imgWrap = $('#poem-image-wrap');
         var poemImg = $('#poem-image');
@@ -452,6 +767,19 @@
                 handleMastered(poemId);
                 showToast('🏆 已标记为熟知');
                 break;
+        }
+
+        if (browseMode) {
+            browseMode = false;
+            var backPage = browseFromPage || 'page-stats';
+            browseFromPage = '';
+            navigateTo(backPage);
+            if (backPage === 'page-stats') {
+                updateStatsPage();
+            } else {
+                updateHomePage();
+            }
+            return;
         }
 
         currentIndex++;
@@ -627,12 +955,15 @@
                     statusClass = 'status-learning';
                 }
                 html += `
-                    <div class="poem-list-item">
+                    <div class="poem-list-item" data-poem-id="${r[0]}">
                         <div class="poem-list-info">
                             <div class="poem-list-title">${r[1]}</div>
                             <div class="poem-list-author">${r[2]}</div>
                         </div>
-                        <span class="poem-list-status ${statusClass}">${statusText}</span>
+                        <div class="poem-list-right">
+                            <span class="poem-list-status ${statusClass}">${statusText}</span>
+                            <span class="poem-list-arrow">›</span>
+                        </div>
                     </div>`;
             });
         } else {
@@ -851,6 +1182,8 @@
 
     function bindEvents() {
         $('#btn-home').addEventListener('click', () => {
+            browseMode = false;
+            browseFromPage = '';
             navigateTo('page-home');
             updateHomePage();
         });
@@ -860,6 +1193,8 @@
                 showToast('今日没有需要学习的诗词');
                 return;
             }
+            browseMode = false;
+            browseFromPage = '';
             currentIndex = 0;
             navigateTo('page-learn');
             renderPoem(todayQueue[0]);
@@ -881,12 +1216,22 @@
             navigateTo('page-data');
         });
 
+        $('#btn-admin').addEventListener('click', () => {
+            navigateTo('page-admin');
+            initAdminPage();
+        });
+
         $('#btn-back-stats').addEventListener('click', () => {
             navigateTo('page-home');
             updateHomePage();
         });
 
         $('#btn-back-data').addEventListener('click', () => {
+            navigateTo('page-home');
+            updateHomePage();
+        });
+
+        $('#btn-back-admin').addEventListener('click', () => {
             navigateTo('page-home');
             updateHomePage();
         });
@@ -916,6 +1261,19 @@
                 btn.classList.add('active');
                 updatePoemList(btn.dataset.filter);
             });
+        });
+
+        $('#poem-list').addEventListener('click', function (e) {
+            var item = e.target.closest('.poem-list-item');
+            if (!item) return;
+            var poemId = parseInt(item.dataset.poemId);
+            if (!poemId) return;
+            browseMode = true;
+            browseFromPage = 'page-stats';
+            var learnRow = db.exec("SELECT poem_id FROM learning WHERE poem_id = ?", [poemId]);
+            var type = (learnRow.length > 0 && learnRow[0].values.length > 0) ? 'review' : 'new';
+            navigateTo('page-learn');
+            renderPoem({ poemId: poemId, type: type });
         });
 
         $('#poem-image-wrap').addEventListener('click', function () {
