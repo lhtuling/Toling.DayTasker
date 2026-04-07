@@ -672,6 +672,16 @@ body {
     background: linear-gradient(90deg, var(--gold), var(--primary-light), var(--gold));
 }
 
+.poem-id-row {
+    margin-bottom: 6px;
+}
+
+.poem-id {
+    font-size: 0.72rem;
+    color: var(--text-light);
+    opacity: 0.6;
+}
+
 .poem-badge {
     display: inline-block;
     padding: 4px 14px;

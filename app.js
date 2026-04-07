@@ -641,6 +641,7 @@
         badge.textContent = queueItem.type === 'new' ? '新学' : '复习';
         badge.className = 'poem-badge' + (queueItem.type === 'review' ? ' review' : '');
 
+        $('#poem-id').textContent = poem.id;
         $('#poem-title').textContent = poem.title;
         $('#poem-author').textContent = poem.author;
 
@@ -699,20 +700,29 @@
         poemDetail.classList.remove('collapsed', 'expanding');
         btnShowPoem.classList.add('hidden');
 
-        var imgSrc = 'img/' + poem.id + '.png';
         var pageLearn = $('#page-learn');
         pageLearn.style.setProperty('--poem-bg', 'none');
-        var testImg = new Image();
-        testImg.onload = function () {
-            poemImg.src = imgSrc;
-            imgWrap.classList.remove('no-image');
-            pageLearn.style.setProperty('--poem-bg', "url('" + imgSrc + "')");
+
+        var imgExts = ['png', 'jpg', 'jpeg'];
+        var tryLoad = function (extIdx) {
+            if (extIdx >= imgExts.length) {
+                imgWrap.classList.add('no-image');
+                poemImg.removeAttribute('src');
+                return;
+            }
+            var imgSrc = 'img/' + poem.id + '.' + imgExts[extIdx];
+            var testImg = new Image();
+            testImg.onload = function () {
+                poemImg.src = imgSrc;
+                imgWrap.classList.remove('no-image');
+                pageLearn.style.setProperty('--poem-bg', "url('" + imgSrc + "')");
+            };
+            testImg.onerror = function () {
+                tryLoad(extIdx + 1);
+            };
+            testImg.src = imgSrc;
         };
-        testImg.onerror = function () {
-            imgWrap.classList.add('no-image');
-            pageLearn.style.setProperty('--poem-bg', 'none');
-        };
-        testImg.src = imgSrc;
+        tryLoad(0);
 
         if (queueItem.type === 'review') {
             poemDetail.classList.add('collapsed');
