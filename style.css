@@ -140,27 +140,8 @@ body {
     padding: 20px 16px 40px;
 }
 
-#page-learn::before {
-    content: '';
-    position: absolute;
-    top: 0;
-    left: 0;
-    right: 0;
-    bottom: 0;
-    background-image: var(--poem-bg, none);
-    background-size: contain;
-    background-position: center;
-    background-repeat: repeat-y;
-    opacity: 0.9;
-    filter: blur(3px);
-    z-index: -1;
-    border-radius: var(--radius-lg);
-    transition: opacity 0.3s ease;
-}
-
 #page-learn {
     position: relative;
-    overflow: hidden;
 }
 
 .page {
@@ -649,10 +630,9 @@ body {
 }
 
 .poem-card {
-    background: rgba(255, 255, 255, 0.55);
-    text-shadow: 0px 0px 12px #ffffff;
+    background: rgba(255, 255, 255, 0.85);
     border-radius: var(--radius-lg);
-    padding: 28px 24px;
+    padding: 20px 24px;
     box-shadow: 0 4px 30px var(--shadow);
     border: 1px solid rgba(139, 69, 19, 0.08);
     margin-bottom: 24px;
@@ -672,25 +652,23 @@ body {
     background: linear-gradient(90deg, var(--gold), var(--primary-light), var(--gold));
 }
 
-.poem-id-row {
-    margin-bottom: 6px;
-}
-
-.poem-id {
-    font-size: 0.72rem;
-    color: var(--text-light);
-    opacity: 0.6;
+.poem-title-row {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 10px;
+    margin-bottom: 8px;
 }
 
 .poem-badge {
     display: inline-block;
-    padding: 4px 14px;
+    padding: 3px 12px;
     border-radius: 20px;
-    font-size: 0.75rem;
+    font-size: 0.72rem;
     font-weight: 600;
-    margin-bottom: 16px;
     background: linear-gradient(135deg, var(--gold), var(--accent));
     color: white;
+    flex-shrink: 0;
 }
 
 .poem-badge.review {
@@ -701,19 +679,15 @@ body {
     font-size: 1.5rem;
     font-weight: 700;
     color: var(--primary-dark);
-    text-align: center;
-    margin-bottom: 8px;
     letter-spacing: 3px;
-    opacity: 0.9;
 }
 
 .poem-author {
     text-align: center;
     color: var(--text-light);
     font-size: 0.9rem;
-    margin-bottom: 24px;
+    margin-bottom: 16px;
     letter-spacing: 2px;
-    opacity: 0.8;
 }
 
 .poem-content {
@@ -723,7 +697,6 @@ body {
     color: var(--text-dark);
     margin-bottom: 20px;
     letter-spacing: 2px;
-    opacity: 0.95;
 }
 
 .poem-content .line {
@@ -775,7 +748,6 @@ body {
     background: linear-gradient(135deg, rgba(201, 169, 110, 0.08), rgba(212, 165, 116, 0.05));
     border-radius: var(--radius);
     border-left: 3px solid var(--gold);
-    opacity: 0.9;
 }
 
 .poem-notes::before {
@@ -804,7 +776,6 @@ body {
     background: linear-gradient(135deg, rgba(139, 69, 19, 0.05), rgba(139, 69, 19, 0.02));
     border-radius: var(--radius);
     border-left: 3px solid var(--primary-light);
-    opacity: 0.9;
 }
 
 .poem-analysis::before {
@@ -1160,6 +1131,16 @@ body {
 
 .poem-list-info {
     flex: 1;
+}
+
+.poem-list-id {
+    font-size: 0.75rem;
+    color: var(--text-light);
+    min-width: 24px;
+    text-align: center;
+    flex-shrink: 0;
+    opacity: 0.6;
+    font-weight: 600;
 }
 
 .poem-list-title {
@@ -1841,4 +1822,244 @@ body {
     background: var(--red);
     border-color: var(--red);
     color: white;
+}
+
+
+/* ── 横屏适配 ─────────────────────────────────────────────── */
+
+@media (orientation: landscape) and (max-height: 600px) {
+    .main-content {
+        max-width: 960px;
+        padding: 12px 24px 30px;
+    }
+    .top-bar {
+        padding: 4px 16px;
+    }
+    .top-bar .logo {
+        font-size: 1.2rem;
+    }
+    .top-bar .nav-btn {
+        width: 34px;
+        height: 34px;
+    }
+    .home-header {
+        display: flex;
+        align-items: center;
+        gap: 20px;
+        margin-bottom: 16px;
+    }
+    .home-header h2 {
+        margin-bottom: 0;
+        white-space: nowrap;
+    }
+    .progress-bar-wrap {
+        flex: 1;
+    }
+    .home-status {
+        grid-template-columns: repeat(4, 1fr);
+        gap: 10px;
+        margin-bottom: 16px;
+    }
+    .status-card {
+        padding: 10px 6px;
+    }
+    .status-num {
+        font-size: 1.4rem;
+    }
+    .home-done {
+        display: flex;
+        flex-wrap: wrap;
+        align-items: center;
+        justify-content: center;
+        gap: 12px;
+        padding: 20px 12px;
+    }
+    .home-done .done-icon {
+        font-size: 2rem;
+        margin-bottom: 0;
+    }
+    .home-done p {
+        font-size: 1.1rem;
+    }
+    .btn-start {
+        max-width: 320px;
+        margin: 12px auto;
+        padding: 14px 28px;
+        font-size: 1.05rem;
+    }
+    #page-learn.active {
+        display: flex;
+        flex-direction: row;
+        gap: 16px;
+        align-items: flex-start;
+    }
+    #page-learn .poem-card {
+        flex: 1;
+        min-width: 0;
+        margin-bottom: 0 !important;
+    }
+    #page-learn .action-buttons {
+        position: sticky;
+        top: 52px;
+        bottom: auto;
+        flex-shrink: 0;
+        width: 150px;
+        background: none;
+        padding: 0;
+        margin: 0;
+        animation: none;
+        left: auto;
+        right: auto;
+        z-index: 10;
+        max-width: none;
+        align-self: flex-start;
+    }
+    #page-learn .main-actions {
+        grid-template-columns: 1fr;
+        gap: 8px;
+    }
+    #page-learn .btn-action {
+        padding: 10px 8px;
+    }
+    #page-learn .btn-icon {
+        font-size: 1.2rem;
+    }
+    #page-learn .btn-mastered {
+        margin-top: 8px;
+        font-size: 0.8rem;
+        padding: 10px 8px;
+    }
+    .stats-grid {
+        grid-template-columns: repeat(4, 1fr);
+    }
+    .memory-chart {
+        padding: 14px;
+    }
+    .poem-list-section {
+        padding: 14px;
+    }
+    .poem-list {
+        max-height: calc(100vh - 320px);
+    }
+    .poem-title {
+        font-size: 1.3rem;
+    }
+    .poem-content {
+        font-size: 1.05rem;
+        line-height: 2.4;
+    }
+    .poem-card {
+        padding: 20px 18px;
+    }
+    .data-actions {
+        display: grid;
+        grid-template-columns: repeat(3, 1fr);
+        gap: 12px;
+    }
+    .data-card {
+        padding: 16px;
+    }
+    .data-icon {
+        font-size: 2rem;
+        margin-bottom: 8px;
+    }
+    .data-card h3 {
+        font-size: 1rem;
+    }
+    .data-card p {
+        font-size: 0.8rem;
+        margin-bottom: 12px;
+    }
+    .admin-poem-list {
+        display: grid;
+        grid-template-columns: repeat(2, 1fr);
+        gap: 8px;
+    }
+    .admin-form-wrap {
+        display: flex;
+        flex-direction: column;
+    }
+    .admin-form-wrap textarea {
+        max-height: calc(100vh - 240px);
+    }
+    .page-title-bar {
+        margin-bottom: 16px;
+    }
+    .modal {
+        max-width: 480px;
+    }
+}
+
+@media (orientation: landscape) and (min-height: 601px) {
+    .main-content {
+        max-width: 900px;
+    }
+    .home-header {
+        display: flex;
+        align-items: center;
+        gap: 24px;
+    }
+    .home-header h2 {
+        margin-bottom: 0;
+        white-space: nowrap;
+    }
+    .progress-bar-wrap {
+        flex: 1;
+    }
+    .home-status {
+        grid-template-columns: repeat(4, 1fr);
+    }
+    .stats-grid {
+        grid-template-columns: repeat(4, 1fr);
+    }
+    .poem-list {
+        max-height: calc(100vh - 380px);
+    }
+    #page-learn.active {
+        display: flex;
+        flex-direction: row;
+        gap: 24px;
+        align-items: flex-start;
+    }
+    #page-learn .poem-card {
+        flex: 1;
+        min-width: 0;
+        margin-bottom: 0 !important;
+    }
+    #page-learn .action-buttons {
+        position: sticky;
+        top: 60px;
+        bottom: auto;
+        flex-shrink: 0;
+        width: 180px;
+        background: none;
+        padding: 0;
+        margin: 0;
+        animation: none;
+        left: auto;
+        right: auto;
+        z-index: 10;
+        max-width: none;
+        align-self: flex-start;
+    }
+    #page-learn .main-actions {
+        grid-template-columns: 1fr;
+        gap: 10px;
+    }
+    #page-learn .btn-mastered {
+        margin-top: 10px;
+    }
+    .data-actions {
+        display: grid;
+        grid-template-columns: repeat(3, 1fr);
+        gap: 16px;
+    }
+    .admin-poem-list {
+        display: grid;
+        grid-template-columns: repeat(2, 1fr);
+        gap: 8px;
+    }
+    .modal {
+        max-width: 500px;
+    }
 }

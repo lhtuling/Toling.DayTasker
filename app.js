@@ -374,9 +374,7 @@
             target.style.animation = '';
         }
 
-        if (pageId !== 'page-learn') {
-            $('#page-learn').style.setProperty('--poem-bg', 'none');
-        }
+
 
         // 滚动到顶部，0.3秒动画
         const startPosition = window.pageYOffset;
@@ -641,7 +639,6 @@
         badge.textContent = queueItem.type === 'new' ? '新学' : '复习';
         badge.className = 'poem-badge' + (queueItem.type === 'review' ? ' review' : '');
 
-        $('#poem-id').textContent = poem.id;
         $('#poem-title').textContent = poem.title;
         $('#poem-author').textContent = poem.author;
 
@@ -700,9 +697,6 @@
         poemDetail.classList.remove('collapsed', 'expanding');
         btnShowPoem.classList.add('hidden');
 
-        var pageLearn = $('#page-learn');
-        pageLearn.style.setProperty('--poem-bg', 'none');
-
         var imgExts = ['png', 'jpg', 'jpeg'];
         var tryLoad = function (extIdx) {
             if (extIdx >= imgExts.length) {
@@ -715,7 +709,6 @@
             testImg.onload = function () {
                 poemImg.src = imgSrc;
                 imgWrap.classList.remove('no-image');
-                pageLearn.style.setProperty('--poem-bg', "url('" + imgSrc + "')");
             };
             testImg.onerror = function () {
                 tryLoad(extIdx + 1);
@@ -966,6 +959,7 @@
                 }
                 html += `
                     <div class="poem-list-item" data-poem-id="${r[0]}">
+                        <span class="poem-list-id">${r[0]}</span>
                         <div class="poem-list-info">
                             <div class="poem-list-title">${r[1]}</div>
                             <div class="poem-list-author">${r[2]}</div>
