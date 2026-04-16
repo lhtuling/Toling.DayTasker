@@ -453,11 +453,32 @@
         const poemCount = countResult[0] ? countResult[0].values[0][0] : 0;
 
         if (poemCount === 0) {
+            // 首次初始化：插入所有诗词
             POEMS_DATA.forEach(p => {
                 db.run(
                     "INSERT OR IGNORE INTO poems VALUES (?, ?, ?, ?, ?, ?, ?)", [p.id, p.title, p.author, JSON.stringify(p.content), JSON.stringify(p.pinyin), JSON.stringify(p.keywords), p.analysis]
                 );
             });
+        } else {
+            // 非首次：同步 poems-data.js 的最新内容（覆盖已有诗词，新增新诗词）
+            POEMS_DATA.forEach(p => {
+                db.run(
+                    "INSERT OR REPLACE INTO poems VALUES (?, ?, ?, ?, ?, ?, ?)", [p.id, p.title, p.author, JSON.stringify(p.content), JSON.stringify(p.pinyin), JSON.stringify(p.keywords), p.analysis]
+                );
+            });
+            // 删除 POEMS_DATA 中已不存在的诗词（被删除的旧数据）
+            const dataIds = POEMS_DATA.map(p => p.id);
+            if (dataIds.length > 0) {
+                const existingRows = db.exec("SELECT id FROM poems");
+                if (existingRows.length > 0) {
+                    existingRows[0].values.forEach(([id]) => {
+                        if (!dataIds.includes(id)) {
+                            db.run("DELETE FROM poems WHERE id = ?", [id]);
+                            db.run("DELETE FROM learning WHERE poem_id = ?", [id]);
+                        }
+                    });
+                }
+            }
         }
 
         saveDB();
