@@ -469,19 +469,24 @@
         localStorage.setItem('poetry_db', b64);
     }
 
+    // 艾宾浩斯遗忘曲线间隔（天），适合小学生一天背一首
+    // 前期密集复习，后期逐渐拉长
     function getIntervalDays(level) {
-        const intervals = [1, 2, 4, 8, 16, 32, 64, 128];
+        const intervals = [1, 2, 4, 7, 15, 30, 60, 120];
         if (level <= 0) return 1;
         if (level <= intervals.length) return intervals[level - 1];
-        return 200 + Math.floor(Math.random() * 166);
+        return 180 + Math.floor(Math.random() * 60);
     }
 
     function handleKnow(poemId) {
-        const rows = db.exec("SELECT memory_level, status FROM learning WHERE poem_id = ?", [poemId]);
+        const rows = db.exec("SELECT memory_level, status, last_review_date FROM learning WHERE poem_id = ?", [poemId]);
         let level = 0;
+        let lastReviewDate = '';
         if (rows.length > 0 && rows[0].values.length > 0) {
             level = rows[0].values[0][0];
+            lastReviewDate = rows[0].values[0][2] || '';
         }
+
         level += 1;
         const interval = getIntervalDays(level);
         const nextReview = addDays(todayStr, interval);
@@ -496,15 +501,17 @@
     }
 
     function handleFuzzy(poemId) {
-        const rows = db.exec("SELECT memory_level FROM learning WHERE poem_id = ?", [poemId]);
+        const rows = db.exec("SELECT memory_level, last_review_date FROM learning WHERE poem_id = ?", [poemId]);
         let level = 1;
 
         if (rows.length > 0 && rows[0].values.length > 0) {
             level = rows[0].values[0][0];
         }
 
-        level = Math.max(1, level - 1);
-        const newInterval = Math.max(1, Math.floor(getIntervalDays(level) / 2));
+        // 模糊：不降级，保持当前等级，但缩短间隔（取当前等级间隔的一半）
+        // 这样小学生不会因为"有点模糊"就严重倒退，复习压力不会太大
+        const currentInterval = getIntervalDays(level);
+        const newInterval = Math.max(1, Math.floor(currentInterval * 0.6));
         const nextReview = addDays(todayStr, newInterval);
 
         db.run(
@@ -517,13 +524,22 @@
     }
 
     function handleForget(poemId) {
+        const rows = db.exec("SELECT memory_level FROM learning WHERE poem_id = ?", [poemId]);
+        let level = 0;
+        if (rows.length > 0 && rows[0].values.length > 0) {
+            level = rows[0].values[0][0];
+        }
+
+        // 忘记：降到前一个等级（而非直接归零），间隔1天后再复习
+        // 小学生完全忘记比较常见，不用太严厉，降到上一级即可
+        const newLevel = Math.max(0, level - 2);
         const nextReview = addDays(todayStr, 1);
 
         db.run(
             `INSERT INTO learning (poem_id, memory_level, next_review, today_remaining, status, mastered, last_action, last_review_date)
-             VALUES (?, 0, ?, 0, 'reviewing', 0, 'forget', ?)
+             VALUES (?, ?, ?, 0, 'reviewing', 0, 'forget', ?)
              ON CONFLICT(poem_id) DO UPDATE SET
-             memory_level = 0, next_review = ?, today_remaining = 0, status = 'reviewing', last_action = 'forget', last_review_date = ?`, [poemId, nextReview, todayStr, nextReview, todayStr]
+             memory_level = ?, next_review = ?, today_remaining = 0, status = 'reviewing', last_action = 'forget', last_review_date = ?`, [poemId, newLevel, nextReview, todayStr, newLevel, nextReview, todayStr]
         );
         saveDB();
     }
@@ -577,10 +593,13 @@
             }
         }
 
+        // 复习队列：今天需要复习的诗
+        // 条件：未掌握 + 到了复习时间 + 今天的"认识/模糊"不重复出现 + 今天的"忘记"可以再复习
         const reviewRows = db.exec(
             `SELECT poem_id FROM learning
-             WHERE mastered = 0 AND next_review <= ? AND last_review_date != ? AND poem_id != ?
-             ORDER BY next_review ASC`, [todayStr, todayStr, todayNewPoemId]
+             WHERE mastered = 0 AND next_review <= ? AND poem_id != ?
+             AND (last_review_date != ? OR last_action = 'forget')
+             ORDER BY next_review ASC`, [todayStr, todayNewPoemId, todayStr]
         );
 
         if (reviewRows.length > 0) {
@@ -881,8 +900,9 @@
         $('#stats-remaining').textContent = Math.max(0, remaining);
 
         const levelData = [];
-        const colors = ['#E8C9A0', '#C9A96E', '#A0522D', '#8B4513', '#6B3410', '#4E2A0A', '#7E57C2', '#4CAF50'];
-        const labels = ['等级0', '等级1', '等级2', '等级3', '等级4', '等级5', '等级6', '等级7+'];
+        const colors = ['#EF5350', '#FF9800', '#FFC107', '#8BC34A', '#4CAF50', '#009688', '#2196F3', '#9C27B0'];
+        const labels = ['🌱 刚学', '📋 入门', '📖 熟悉', '✅ 掌握', '💪 牢固', '🎯 深知', '⭐ 精通', '🏆 通达'];
+        const intervalDescs = ['1天后', '2天后', '4天后', '7天后', '15天后', '30天后', '60天后', '120天+'];
 
         for (let i = 0; i <= 7; i++) {
             let count;
@@ -902,7 +922,7 @@
             const pct = (levelData[i] / maxCount * 100).toFixed(1);
             chartHtml += `
                 <div class="chart-row">
-                    <span class="chart-label">${label}</span>
+                    <span class="chart-label" title="复习间隔：${intervalDescs[i]}">${label}</span>
                     <div class="chart-bar-bg">
                         <div class="chart-bar-fill" style="width:${pct}%;background:${colors[i]}"></div>
                     </div>
@@ -1276,8 +1296,10 @@
             browseFromPage = 'page-stats';
             var learnRow = db.exec("SELECT poem_id FROM learning WHERE poem_id = ?", [poemId]);
             var type = (learnRow.length > 0 && learnRow[0].values.length > 0) ? 'review' : 'new';
+            todayQueue = [{ poemId: poemId, type: type }];
+            currentIndex = 0;
             navigateTo('page-learn');
-            renderPoem({ poemId: poemId, type: type });
+            renderPoem(todayQueue[0]);
         });
 
         $('#poem-image-wrap').addEventListener('click', function () {
